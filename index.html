@@ -494,21 +494,32 @@ Speech.init();
 
 /* Banque de voix pré-générées (edge-tts) + effet ralenti selon le palier */
 const Voice = {
-  buffers:new Map(), loading:false, current:null, log:[], lastAt:0,
+  buffers:new Map(), missing:[], loading:false, current:null, log:[], lastAt:0,
   async load(){
     if(this.loading || !audio) return;
     this.loading = true;
     const jobs = [];
     TIERS.forEach((t,i)=> t.lines.forEach((_,k)=> jobs.push([`t${i}_${k}`, `audio/t${i}_${k}.mp3`])));
     Object.keys(NARR).forEach(k=> jobs.push([`n_${k}`, `audio/n_${k}.mp3`]));
-    await Promise.all(jobs.map(async ([key,url])=>{
-      try{
-        const res = await fetch(url, {cache:'force-cache'});
-        if(!res.ok) return;
-        const buf = await audio.decodeAudioData(await res.arrayBuffer());
-        this.buffers.set(key, buf);
-      }catch(e){}
-    }));
+
+    const one = async (key,url)=>{
+      for(let attempt=0; attempt<3; attempt++){
+        try{
+          const res = await fetch(url, {cache:'force-cache'});
+          if(!res.ok) throw new Error('http '+res.status);
+          const buf = await audio.decodeAudioData(await res.arrayBuffer());
+          this.buffers.set(key, buf);
+          return;
+        }catch(e){
+          await new Promise(r=>setTimeout(r, 220 + attempt*280));
+        }
+      }
+      this.missing.push(key);
+    };
+    // par paquets de 8 pour ne pas saturer le décodage sur mobile
+    for(let i=0;i<jobs.length;i+=8){
+      await Promise.all(jobs.slice(i,i+8).map(([k,u])=>one(k,u)));
+    }
   },
   play(key, tier, text, who, color, profile){
     Speech.show(who, text, color);
