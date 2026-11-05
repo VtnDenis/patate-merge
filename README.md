@@ -15,8 +15,10 @@ jusqu'à la Patate suprême. Le tout dans une fausse interface TikTok verticale.
   Cosmopatate et Super Patate.
 - Effet ralenti progressif : plus la patate monte, plus la voix traîne et s'assombrit
   (`playbackRate` 1.12 → 0.70 + filtre passe-bas + écho sur les hauts paliers).
-- Musique et effets sonores générés en WebAudio (aucun fichier audio externe).
-- Physique de fusion type Suika, décor de bocal, comptoir, frise de progression, sous-titres.
+- Musique : boucle synthétisée (`gen_music.py` → `audio/music_loop.mp3`), lue en `<audio loop>`.
+  Voix et musique passent par HTMLAudioElement (compatible iOS), les effets par WebAudio quand il est dispo.
+- Physique de fusion type Suika dans un **bocal circulaire** (les patates roulent le long de la paroi),
+  comptoir, frise de progression, sous-titres.
 - Épisodes : quand la Patate suprême apparaît (ou quand ça déborde), l'écran coupe et ça repart.
 
 ## Détails

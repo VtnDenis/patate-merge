@@ -47,18 +47,20 @@
     filter:blur(8px);pointer-events:none}
 
   /* bocal */
-  .jar{position:absolute;left:14px;right:62px;top:104px;bottom:162px;z-index:8;pointer-events:none;
-    border-left:3px solid rgba(255,255,255,.26);border-right:3px solid rgba(255,255,255,.26);
-    border-bottom:3px solid rgba(255,255,255,.32);border-radius:5px 5px 30px 30px;
-    background:linear-gradient(180deg,rgba(255,238,205,.10),rgba(255,255,255,.03) 42%,rgba(255,255,255,0) 100%),
-      linear-gradient(90deg,rgba(255,255,255,.10),rgba(255,255,255,0) 12%,rgba(255,255,255,0) 88%,rgba(255,255,255,.10));
-    box-shadow:inset 0 -40px 70px rgba(0,0,0,.40),inset 0 0 46px rgba(255,255,255,.05),
-      0 0 24px rgba(255,220,170,.06)}
-  .jar .rim{position:absolute;left:-3px;right:-3px;top:-4px;height:8px;border-radius:6px;
-    background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04))}
-  .jar .line{position:absolute;left:8px;right:8px;top:26px;border-top:1px dashed rgba(255,255,255,.14)}
-  .jar .glare{position:absolute;left:14px;top:30px;width:9px;height:56%;border-radius:8px;
-    background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0));filter:blur(2px)}
+  .dome{position:absolute;left:6px;top:204px;width:384px;height:384px;z-index:8;pointer-events:none;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.22);
+    background:
+      radial-gradient(120% 120% at 34% 24%, rgba(255,255,255,.10), rgba(255,255,255,.02) 42%, rgba(255,255,255,0) 70%),
+      radial-gradient(140% 140% at 62% 82%, rgba(255,200,150,.08), rgba(0,0,0,0) 62%);
+    box-shadow:inset 0 -50px 80px rgba(0,0,0,.45), inset 0 20px 60px rgba(255,255,255,.05),
+      0 0 30px rgba(255,220,170,.07)}
+  .dome .glare{position:absolute;left:52px;top:34px;width:16px;height:120px;border-radius:999px;
+    background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0));filter:blur(3px);
+    transform:rotate(-18deg)}
+  .dome .glare.small{left:auto;right:64px;top:46px;width:9px;height:60px;opacity:.5;transform:rotate(14deg)}
+  .dome .ringline{position:absolute;left:50%;top:74px;transform:translateX(-50%);width:150px;height:1px;
+    border-top:1px dashed rgba(255,255,255,.13)}
 
   /* comptoir + guide de chute */
   .counter{position:absolute;left:0;right:0;bottom:144px;height:34px;z-index:26;
@@ -69,7 +71,7 @@
     box-shadow:0 -14px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,235,200,.28),inset 0 -6px 10px rgba(0,0,0,.4)}
   .counter::after{content:"";position:absolute;left:24px;right:76px;top:-16px;height:18px;
     border-radius:50%;background:radial-gradient(50% 100% at 50% 100%,rgba(0,0,0,.6),transparent 70%)}
-  .guide{position:absolute;top:110px;width:2px;z-index:9;opacity:0;pointer-events:none;
+  .guide{position:absolute;top:210px;height:370px;width:2px;z-index:9;opacity:0;pointer-events:none;
     background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.30) 30%,rgba(255,255,255,.10));
     transition:opacity .35s}
 
@@ -150,7 +152,7 @@
 
   /* plateau */
   .board{position:absolute;inset:0;z-index:10;touch-action:none;cursor:crosshair;transition:transform .25s ease;
-    clip-path:inset(102px 0 146px 0)}
+    clip-path:circle(192px at 198px 396px)}
   .board.shake{animation:shake .3s cubic-bezier(.36,.07,.19,.97)}
   .fx{position:absolute;inset:0;pointer-events:none;z-index:20}
 
@@ -247,6 +249,12 @@
     display:grid;place-items:center;background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.14);
     color:#fff;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
   .snd.off{opacity:.45}
+  .soundhint{position:absolute;left:50%;top:150px;transform:translate(-50%,-8px);z-index:48;
+    border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 15px;cursor:pointer;
+    background:rgba(20,10,6,.86);color:#fff;font-family:var(--ui);font-size:12px;font-weight:700;
+    box-shadow:0 10px 26px rgba(0,0,0,.55);backdrop-filter:blur(8px);
+    opacity:0;pointer-events:none;transition:.25s}
+  .soundhint.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 
   @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(26px,-22px) scale(1.12)}}
   @keyframes float{0%,100%{transform:translateX(-50%) translateY(0) rotate(-8deg)}50%{transform:translateX(-50%) translateY(-4px) rotate(-4deg)}}
@@ -279,8 +287,8 @@
       <div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
       <div class="spot"></div>
 
-      <div class="jar">
-        <div class="rim"></div><div class="line"></div><div class="glare"></div>
+      <div class="dome">
+        <div class="glare"></div><div class="glare small"></div><div class="ringline"></div>
       </div>
       <div class="counter"></div>
       <div class="guide" id="guide"></div>
@@ -309,6 +317,7 @@
       </div>
 
       <div class="snd" id="snd" title="son">🔊</div>
+      <button class="soundhint" id="soundhint">🔈 Touche pour activer le son</button>
 
       <div class="rail">
         <div class="avatar">🥔</div>
@@ -349,6 +358,7 @@
       </div>
 
       <div class="livebar"></div>
+      <audio id="music" loop preload="auto" src="audio/music_loop.mp3"></audio>
 
       <div class="boot" id="boot">
         <div class="big">🥔</div>
@@ -369,9 +379,11 @@
    PATATE MERGE — plateau logique 405x760, mis à l'échelle via --s
    ============================================================ */
 const W = 405, H = 760;
-const FLOOR = H - 172;
+// bocal circulaire : centre + rayon
+const CX = 198, CY = 396, R = 192;
+const FLOOR = CY + R - 6;          // bas du cercle
 const WALL = 14, WALLR = W - 58;
-const TOPLINE = 132;
+const TOPLINE = CY - R + 96;       // niveau "bocal plein"
 const G = 2300;
 const MAXT = 13;
 const DROP_MS = 660;
@@ -496,9 +508,9 @@ Speech.init();
 
 /* Banque de voix pré-générées (edge-tts) + effet ralenti selon le palier */
 const Voice = {
-  buffers:new Map(), missing:[], errors:[], loading:false, current:null, log:[], lastAt:0,
+  clips:new Map(), missing:[], errors:[], loading:false, current:null, log:[], lastAt:0,
   async load(){
-    if(this.loading || !audio) return;
+    if(this.loading) return;
     this.loading = true;
     const jobs = [];
     TIERS.forEach((t,i)=>{
@@ -508,49 +520,22 @@ const Voice = {
     Object.keys(NARR).forEach(k=> jobs.push([`n_${k}`, `audio/n_${k}.mp3`]));
     Object.values(REAL).forEach(k=> jobs.push([k, `audio/${k}.mp3`]));
 
-    // 1) téléchargement en parallèle
-    const raws = await Promise.all(jobs.map(async ([key,url])=>{
-      for(let attempt=0; attempt<3; attempt++){
-        try{
-          const res = await fetch(attempt ? url + '?r=' + attempt : url);
-          if(!res.ok) throw new Error('http '+res.status);
-          return [key, await res.arrayBuffer()];
-        }catch(e){
-          await new Promise(r=>setTimeout(r, 200 + attempt*260));
-        }
-      }
-      return [key, null];
-    }));
-    // 2) décodage séquentiel (Chrome n'aime pas les décodages simultanés)
-    for(const [key, ab] of raws){
-      if(!ab){ this.missing.push(key); continue; }
+    await Promise.all(jobs.map(([key,url])=> new Promise(resolve=>{
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = url;
+      this.clips.set(key, a);
       let done = false;
-      for(let attempt=0; attempt<2 && !done; attempt++){
-        try{
-          this.buffers.set(key, await audio.decodeAudioData(ab.slice(0)));
-          done = true;
-        }catch(e){
-          await new Promise(r=>setTimeout(r, 120));
-        }
-      }
-      if(!done) this.missing.push(key);
-    }
-    // 3) rattrapage : un fichier peut échouer dans le lot, on le reprend seul
-    if(this.missing.length){
-      await new Promise(r=>setTimeout(r, 400));
-      for(const key of this.missing.slice()){
-        const url = `audio/${key}.mp3?retry=${Date.now()}`;
-        try{
-          const res = await fetch(url);
-          if(!res.ok) throw new Error('http '+res.status);
-          const buf = await audio.decodeAudioData(await res.arrayBuffer());
-          this.buffers.set(key, buf);
-          this.missing = this.missing.filter(k=>k!==key);
-        }catch(e){
-          this.errors.push([key, e.name+': '+e.message]);
-        }
-      }
-    }
+      const finish = ok=>{
+        if(done) return; done = true;
+        if(!ok) this.missing.push(key);
+        resolve();
+      };
+      a.addEventListener('canplaythrough', ()=>finish(true), {once:true});
+      a.addEventListener('error', ()=>finish(false), {once:true});
+      a.load();
+      setTimeout(()=>finish(a.readyState >= 2), 3000);
+    })));
   },
   play(key, tier, text, who, color, profile){
     Speech.show(who, text, color);
@@ -563,36 +548,29 @@ const Voice = {
     if(!isNarr && now - this.lastAt < 850) return;   // évite que ça se coupe en permanence
     this.lastAt = now;
 
-    const buf = this.buffers.get(key);
-    if(buf && audio && audio.state !== 'closed'){
+    const el = this.clips.get(key);
+    if(el){
       try{
-        if(this.current){ try{ this.current.stop(); }catch(e){} }
+        if(this.current && this.current !== el) this.current.pause();
         // effet ralenti : plus la patate monte, plus la voix traîne et s'assombrit
         const rate = isNarr ? 0.94
           : clamp(1.12 - tier*0.032, 0.68, 1.14) * rnd(0.985, 1.015);
         this.lastRate = +rate.toFixed(3);
         this.lastTier = tier;
-        const src = audio.createBufferSource();
-        src.buffer = buf;
-        src.playbackRate.value = rate;
-        const lp = audio.createBiquadFilter();
-        lp.type = 'lowpass'; lp.Q.value = 0.6;
-        lp.frequency.value = isNarr ? 16000 : (tier>=11 ? 2500 : (tier>=8 ? 3600 : (tier>=5 ? 5200 : 16000)));
-        const g = audio.createGain(); g.gain.value = 1.0;
-        src.connect(lp); lp.connect(g); g.connect(Sound.voiceGain || Sound.master);
-        if(!isNarr && tier>=8){          // queue d'écho : effet "slowed + reverb"
-          const dl = audio.createDelay(0.6); dl.delayTime.value = 0.085;
-          const fb = audio.createGain(); fb.gain.value = 0.17;
-          const wet = audio.createGain(); wet.gain.value = 0.20;
-          g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(Sound.voiceGain || Sound.master);
-        }
-        src.start();
-        this.current = src;
-        if(Sound.musicGain && !isNarr){
-          const t0 = audio.currentTime, dur = buf.duration / rate;
-          Sound.musicGain.gain.cancelScheduledValues(t0);
-          Sound.musicGain.gain.setTargetAtTime(0.028, t0, 0.05);
-          Sound.musicGain.gain.setTargetAtTime(0.105, t0 + dur + 0.04, 0.24);
+        el.pause();
+        el.currentTime = 0;
+        el.playbackRate = rate;
+        try{ el.preservesPitch = false; }catch(e){}
+        try{ el.webkitPreservesPitch = false; }catch(e){}
+        el.volume = 1;
+        const pr = el.play();
+        if(pr && pr.catch) pr.catch(()=> Speech.tts(text, profile || {lang:'fr-FR', pitch:1, rate:1}));
+        this.current = el;
+        if(!isNarr && Sound.musicEl){        // duck de la musique pendant la réplique
+          Sound.musicEl.volume = 0.10;
+          clearTimeout(this._duck);
+          this._duck = setTimeout(()=>{ if(Sound.musicEl) Sound.musicEl.volume = state.soundOn ? 0.38 : 0; },
+            Math.max(500, ((el.duration||2)/rate)*1000));
         }
         return;
       }catch(e){}
@@ -619,13 +597,31 @@ const Sound = {
     if(!AC) return null;
     audio = new AC();
     this.master = audio.createGain(); this.master.gain.value = 0.9; this.master.connect(audio.destination);
-    this.musicGain = audio.createGain(); this.musicGain.gain.value = 0.105; this.musicGain.connect(this.master);
+    this.musicGain = audio.createGain(); this.musicGain.gain.value = 0.13; this.musicGain.connect(this.master);
     this.sfxGain = audio.createGain(); this.sfxGain.gain.value = 0.45; this.sfxGain.connect(this.master);
     this.voiceGain = audio.createGain(); this.voiceGain.gain.value = 1.0; this.voiceGain.connect(this.master);
-    this.startMusic();
+    // déblocage iOS : un buffer muet joué dans le geste utilisateur
+    try{
+      const b = audio.createBuffer(1, 1, audio.sampleRate);
+      const s = audio.createBufferSource(); s.buffer = b; s.connect(audio.destination); s.start(0);
+    }catch(e){}
     return audio;
   },
-  resume(){ if(audio && audio.state==='suspended') audio.resume(); },
+  musicEl: null,
+  initMusic(){
+    if(this.musicEl) return this.musicEl;
+    const el = document.getElementById('music');
+    if(el){ el.volume = state.soundOn ? 0.38 : 0; this.musicEl = el; }
+    return this.musicEl;
+  },
+  playMusic(){
+    const el = this.initMusic();
+    if(!el) return;
+    el.volume = state.soundOn ? 0.38 : 0;
+    const p = el.play();
+    if(p && p.catch) p.catch(()=>{});
+  },
+  resume(){ if(audio && audio.state!=='running') audio.resume().catch(()=>{}); },
   blip(freq,dur=0.13,type='sine',gain=0.22){
     if(!audio) return;
     const t=audio.currentTime,o=audio.createOscillator(),g=audio.createGain();
@@ -878,7 +874,10 @@ function buildPotato(p){
 function addPotato(tier,x,y,vy=0){
   const t = TIERS[tier];
   const r = t.d*0.455;
-  const p = {id:state.nextId++, tier, x:clamp(x,WALL+r,WALLR-r), y,
+  y = Math.max(y, CY-R+r+9);                       // on naît sous le bord du cercle
+  const dy = Math.min(Math.abs(y-CY), Math.max(0,R-r-5));
+  const half = Math.sqrt(Math.max(0, (R-r-4)**2 - dy*dy));
+  const p = {id:state.nextId++, tier, x:clamp(x, CX-half, CX+half), y,
     vx:rnd(-8,8), vy, r, alive:true, rest:0, rot:rnd(-6,6), seed:Math.floor(rnd(1,99999)), el:null};
   state.potatoes.push(p);
   buildPotato(p);
@@ -1007,12 +1006,17 @@ function frame(now){
     p.rot += p.vx*dt*0.55;
     p.rot *= 0.995;
     if(p.rot>22) p.rot=22; else if(p.rot<-22) p.rot=-22;
-    if(p.x-p.r<WALL+3){p.x=WALL+3+p.r; p.vx=Math.abs(p.vx)*0.35;}
-    if(p.x+p.r>WALLR-3){p.x=WALLR-3-p.r; p.vx=-Math.abs(p.vx)*0.35;}
-    if(p.y+p.r>FLOOR){
-      p.y=FLOOR-p.r;
-      if(Math.abs(p.vy)>60) p.vy=-p.vy*0.14; else p.vy=0;
-      p.vx*=0.86; p.rest+=dt;
+    const dxC=p.x-CX, dyC=p.y-CY;
+    const dist=Math.hypot(dxC,dyC)||0.001;
+    const maxd=R-p.r-7;
+    if(dist>maxd){
+      const nx=dxC/dist, ny=dyC/dist;
+      p.x=CX+nx*maxd; p.y=CY+ny*maxd;
+      const vn=p.vx*nx+p.vy*ny;
+      if(vn>0){ p.vx-=1.25*vn*nx; p.vy-=1.25*vn*ny; }
+      p.vx*=0.92; p.vy*=0.92;
+      if(ny>0.35 && Math.abs(p.vy)<70){ p.vy*=0.6; p.rest+=dt; }
+      else p.rest=Math.max(0,p.rest-dt);
     }else p.rest=Math.max(0,p.rest-dt*1.5);
   }
 
@@ -1071,32 +1075,32 @@ function autoDrop(){
   const counts=new Array(MAXT+1).fill(0);
   for(const p of state.potatoes) if(p.alive) counts[p.tier]++;
 
-  let x=rnd(WALL+44,WALLR-44), tier=0;
+  let x=rnd(CX-150,CX+150), tier=0;
   let target=-1;
   for(let t=Math.min(5,state.maxTier+1); t>=0; t--){ if(counts[t]>=2){ target=t; break; } }
   if(target>=0){
     const c=pick(state.potatoes.filter(p=>p.alive&&p.tier===target));
-    x=clamp(c.x+rnd(-6,6),WALL+34,WALLR-34);
+    x=clamp(c.x+rnd(-6,6),CX-165,CX+165);
     tier=target;
   }else{
     const buckets=new Array(9).fill(0);
     for(const p of state.potatoes){
       if(!p.alive) continue;
-      const i=clamp(Math.floor(((p.x-WALL)/(WALLR-WALL))*9),0,8);
+      const i=clamp(Math.floor(((p.x-(CX-R))/(2*R))*9),0,8);
       buckets[i]=Math.max(buckets[i],FLOOR-p.y);
     }
     let best=0;
     for(let i=1;i<9;i++) if(buckets[i]<buckets[best]) best=i;
-    x=WALL+(best+0.5)*((WALLR-WALL)/9)+rnd(-9,9);
+    x=CX-R+(best+0.5)*((2*R)/9)+rnd(-9,9);
     const r=Math.random();
     tier=r<0.24?1:(r<0.34?2:0);
   }
   if(state.t>12&&Math.random()<0.065){
     tier=clamp(3+Math.floor(rnd(0,3)),0,6);
-    x=rnd(WALL+56,WALLR-56);
+    x=rnd(CX-120,CX+120);
     Voice.narrate('rare');
   }
-  addPotato(tier,x,64,40).vy+=rnd(-10,20);
+  addPotato(tier,x,CY-R+20,40).vy+=rnd(-10,20);
   showGuide(x);
 }
 
@@ -1149,8 +1153,8 @@ function prefill(){
   const n=9;
   for(let i=0;i<n;i++){
     const tier=i<5?0:(i<8?1:2);
-    const x=WALL+((WALLR-WALL)/(n+1))*(i+1)+rnd(-12,12);
-    addPotato(tier,x,96+i*26,30);
+    const x=CX+(i-(n-1)/2)*64+rnd(-10,10);
+    addPotato(tier,x,CY-R+30+i*8,25);
   }
   if(Math.random()<0.5) setTimeout(()=>{ if(state.running) addPotato(3,rnd(WALL+40,WALLR-40),FLOOR-120,10); },1800);
 }
@@ -1158,7 +1162,7 @@ function prefill(){
 /* ---------------- interactions ---------------- */
 function phoneX(clientX){
   const r=phone.getBoundingClientRect();
-  return clamp((clientX-r.left)/(r.width/W),WALL+30,WALLR-30);
+  return clamp((clientX-r.left)/(r.width/W),CX-R+42,CX+R-42);
 }
 board.addEventListener('pointerdown',e=>{
   if(!state.running) return;
@@ -1193,9 +1197,22 @@ sndBtn.addEventListener('click',()=>{
   sndBtn.textContent=state.soundOn?'🔊':'🔇';
   sndBtn.classList.toggle('off',!state.soundOn);
   if(state.soundOn){ Sound.ensure(); Sound.resume(); }
-  if(Sound.musicGain) Sound.musicGain.gain.value=state.soundOn?0.105:0;
+  if(Sound.musicEl) Sound.musicEl.volume = state.soundOn ? 0.38 : 0;
   if(!state.soundOn&&'speechSynthesis' in window) window.speechSynthesis.cancel();
 });
+
+/* déblocage audio (iOS refuse le son sans geste) */
+const soundHint = document.getElementById('soundhint');
+function audioReady(){ return !!(Sound.musicEl && !Sound.musicEl.paused && Sound.musicEl.currentTime > 0); }
+function refreshSoundHint(){ soundHint.classList.toggle('on', state.running && !audioReady()); }
+soundHint.addEventListener('click', e=>{
+  e.stopPropagation();
+  Sound.ensure(); Sound.resume(); Sound.playMusic();
+  setTimeout(refreshSoundHint, 500);
+});
+setInterval(refreshSoundHint, 1200);
+document.addEventListener('pointerdown', ()=>{ Sound.resume(); if(!audioReady()) Sound.playMusic(); }, {passive:true});
+document.addEventListener('touchend', ()=>{ if(audio) Sound.resume(); }, {passive:true});
 
 /* rotation des légendes */
 setInterval(()=>{
@@ -1219,9 +1236,12 @@ document.getElementById('start').addEventListener('click', async ()=>{
   const btn = document.getElementById('start');
   btn.disabled = true;
   btn.textContent = 'PRÉPARATION DES VOIX…';
-  Sound.ensure(); Sound.resume();
+  Sound.ensure(); Sound.resume(); Sound.playMusic();
   // on attend les voix (max 4 s) pour ne pas démarrer sur la synthèse du navigateur
+  Sound.resume();
   await Promise.race([ Voice.load(), new Promise(r=>setTimeout(r,7000)) ]);
+  Sound.resume();
+  refreshSoundHint();
   btn.disabled = false;
   btn.textContent = '▶ LANCER LE BRAINROT';
   boot.classList.add('hide');
@@ -1237,7 +1257,7 @@ window.BRAINROT={
     const alive=state.potatoes.filter(p=>p.alive);
     return {running:state.running,count:alive.length,merges:state.mergeCount,maxTier:state.maxTier,
       maxTierName:TIERS[state.maxTier].n,episode:state.episode,coins:state.coins,
-      subtitle:subLine.textContent,voices:Voice.buffers.size,spoken:Voice.log.length,
+      subtitle:subLine.textContent,voices:Voice.clips.size,spoken:Voice.log.length,
       card:cardEl.classList.contains('on'), ribbon:document.getElementById('ribbon').classList.contains('on'),
       errors:window.__errs||[]};
   },
