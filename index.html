@@ -447,8 +447,16 @@ const rnd = (a,b)=>a+Math.random()*(b-a);
 const pick = a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------------- voix ---------------- */
+const NARR = {
+  welcome:"Bienvenue dans Patate Merge.",
+  episode:"Nouvel épisode.",
+  overflow:"La patate a débordé.",
+  rare:"Oh, une patate rare !",
+  hop:"Hop."
+};
+
 const Speech = {
-  voices:[], log:[], lastAt:0, pending:null,
+  voices:[],
   init(){
     if(!('speechSynthesis' in window)) return;
     const load=()=>{ this.voices = window.speechSynthesis.getVoices()||[]; };
@@ -462,19 +470,13 @@ const Speech = {
     if(!v) v = this.voices.find(v=>v.lang.toLowerCase().startsWith('fr'));
     return v||null;
   },
-  say(text, profile, who, color){
-    this.show(who, text, color);
-    this.log.push({t:Math.round(performance.now()), text, lang:profile.lang});
-    if(this.log.length>80) this.log.shift();
+  tts(text, profile){
     if(!('speechSynthesis' in window) || !state.soundOn) return;
-    const now = performance.now();
-    if(now - this.lastAt < 480) return;
-    this.lastAt = now;
     try{
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = profile.lang; u.pitch = profile.pitch; u.rate = profile.rate; u.volume = 1;
-      const v = this.voiceFor(profile.lang);
+      u.lang = profile.lang||'fr-FR'; u.pitch = profile.pitch||1; u.rate = profile.rate||1; u.volume = 1;
+      const v = this.voiceFor(u.lang);
       if(v) u.voice = v;
       window.speechSynthesis.speak(u);
     }catch(e){}
@@ -485,10 +487,85 @@ const Speech = {
     subLine.textContent = text;
     sub.classList.add('on');
     clearTimeout(this._hide);
-    this._hide = setTimeout(()=>sub.classList.remove('on'), Math.min(3400, 1200 + text.length*38));
+    this._hide = setTimeout(()=>sub.classList.remove('on'), Math.min(3600, 1300 + text.length*40));
   }
 };
 Speech.init();
+
+/* Banque de voix pré-générées (edge-tts) + effet ralenti selon le palier */
+const Voice = {
+  buffers:new Map(), loading:false, current:null, log:[], lastAt:0,
+  async load(){
+    if(this.loading || !audio) return;
+    this.loading = true;
+    const jobs = [];
+    TIERS.forEach((t,i)=> t.lines.forEach((_,k)=> jobs.push([`t${i}_${k}`, `audio/t${i}_${k}.mp3`])));
+    Object.keys(NARR).forEach(k=> jobs.push([`n_${k}`, `audio/n_${k}.mp3`]));
+    await Promise.all(jobs.map(async ([key,url])=>{
+      try{
+        const res = await fetch(url, {cache:'force-cache'});
+        if(!res.ok) return;
+        const buf = await audio.decodeAudioData(await res.arrayBuffer());
+        this.buffers.set(key, buf);
+      }catch(e){}
+    }));
+  },
+  play(key, tier, text, who, color, profile){
+    Speech.show(who, text, color);
+    this.log.push({t:Math.round(performance.now()), key, text});
+    if(this.log.length>80) this.log.shift();
+    if(!state.soundOn) return;
+
+    const isNarr = key.startsWith('n_');
+    const now = performance.now();
+    if(!isNarr && now - this.lastAt < 850) return;   // évite que ça se coupe en permanence
+    this.lastAt = now;
+
+    const buf = this.buffers.get(key);
+    if(buf && audio && audio.state !== 'closed'){
+      try{
+        if(this.current){ try{ this.current.stop(); }catch(e){} }
+        // effet ralenti : plus la patate monte, plus la voix traîne et s'assombrit
+        const rate = isNarr ? 0.94
+          : clamp(1.12 - tier*0.032, 0.68, 1.14) * rnd(0.985, 1.015);
+        this.lastRate = +rate.toFixed(3);
+        this.lastTier = tier;
+        const src = audio.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = rate;
+        const lp = audio.createBiquadFilter();
+        lp.type = 'lowpass'; lp.Q.value = 0.6;
+        lp.frequency.value = isNarr ? 16000 : (tier>=11 ? 2500 : (tier>=8 ? 3600 : (tier>=5 ? 5200 : 16000)));
+        const g = audio.createGain(); g.gain.value = 1.0;
+        src.connect(lp); lp.connect(g); g.connect(Sound.voiceGain || Sound.master);
+        if(!isNarr && tier>=8){          // queue d'écho : effet "slowed + reverb"
+          const dl = audio.createDelay(0.6); dl.delayTime.value = 0.085;
+          const fb = audio.createGain(); fb.gain.value = 0.17;
+          const wet = audio.createGain(); wet.gain.value = 0.20;
+          g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(Sound.voiceGain || Sound.master);
+        }
+        src.start();
+        this.current = src;
+        if(Sound.musicGain && !isNarr){
+          const t0 = audio.currentTime, dur = buf.duration / rate;
+          Sound.musicGain.gain.cancelScheduledValues(t0);
+          Sound.musicGain.gain.setTargetAtTime(0.028, t0, 0.05);
+          Sound.musicGain.gain.setTargetAtTime(0.105, t0 + dur + 0.04, 0.24);
+        }
+        return;
+      }catch(e){}
+    }
+    Speech.tts(text, profile || {lang:'fr-FR', pitch:1, rate:1});
+  },
+  sayTier(tier){
+    const t = TIERS[tier];
+    const k = Math.floor(Math.random()*t.lines.length);
+    this.play(`t${tier}_${k}`, tier, t.lines[k], t.tag, t.col, t);
+  },
+  narrate(key, text, color){
+    this.play(`n_${key}`, 8, text || NARR[key], 'LE NARRATEUR', color||'#ffd166', NARRATOR);
+  }
+};
 
 /* ---------------- audio ---------------- */
 const Sound = {
@@ -500,6 +577,7 @@ const Sound = {
     this.master = audio.createGain(); this.master.gain.value = 0.9; this.master.connect(audio.destination);
     this.musicGain = audio.createGain(); this.musicGain.gain.value = 0.105; this.musicGain.connect(this.master);
     this.sfxGain = audio.createGain(); this.sfxGain.gain.value = 0.45; this.sfxGain.connect(this.master);
+    this.voiceGain = audio.createGain(); this.voiceGain.gain.value = 1.0; this.voiceGain.connect(this.master);
     this.startMusic();
     return audio;
   },
@@ -541,6 +619,7 @@ const Sound = {
     const bpm=124, step=60/bpm/4;
     let next=audio.currentTime+0.08, i=0;
     const bass=[45,45,57,45, 48,48,55,48, 45,45,57,45, 43,43,50,43];
+    const lead=[0,0,0,0, 72,0,74,0, 0,76,0,74, 72,0,0,0];
     const tick=()=>{
       if(!audio) return;
       while(next < audio.currentTime + 0.12){
@@ -549,6 +628,7 @@ const Sound = {
         if(s===4||s===12) this.snare(next);
         if(s%2===1) this.hat(next, s%4===3?0.045:0.022);
         this.bassNote(next, bass[s]+(bar===3?2:0), step*1.7);
+        if(lead[s]) this.leadNote(next, lead[s]+(bar===3?-2:0), step*1.5);
         if(s===0) this.pad(next,[57,60,64][bar%3],step*15);
         i++; next+=step;
       }
@@ -588,6 +668,16 @@ const Sound = {
     o.type='sawtooth'; o.frequency.value=f;
     lp.type='lowpass'; lp.frequency.value=420; lp.Q.value=4;
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.2,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(lp); lp.connect(g); g.connect(this.musicGain); o.start(t); o.stop(t+dur+0.02);
+  },
+  leadNote(t,midi,dur){
+    if(!audio) return;
+    const f=440*Math.pow(2,(midi-69)/12);
+    const o=audio.createOscillator(), g=audio.createGain(), lp=audio.createBiquadFilter();
+    o.type='triangle'; o.frequency.value=f;
+    lp.type='lowpass'; lp.frequency.value=2400; lp.Q.value=1.2;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.06,t+0.01);
     g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
     o.connect(lp); lp.connect(g); g.connect(this.musicGain); o.start(t); o.stop(t+dur+0.02);
   },
@@ -807,8 +897,7 @@ function fadeOut(p){
   setTimeout(()=>el.remove(),240);
 }
 function shout(tier){
-  const t=TIERS[tier];
-  Speech.say(pick(t.lines), t, t.tag, t.col);
+  Voice.sayTier(tier);
 }
 
 /* ---------------- fx ---------------- */
@@ -961,7 +1050,7 @@ function autoDrop(){
   if(state.t>12&&Math.random()<0.065){
     tier=clamp(3+Math.floor(rnd(0,3)),0,6);
     x=rnd(WALL+56,WALLR-56);
-    Speech.say("oh, une "+TIERS[tier].n.replace(/^la /,'')+" !",NARRATOR,'LE NARRATEUR','#ffd166');
+    Voice.narrate('rare');
   }
   addPotato(tier,x,64,40).vy+=rnd(-10,20);
   showGuide(x);
@@ -978,13 +1067,13 @@ function supreme(x,y){
   cardEl.querySelector('#cardT').textContent='LA PATATE SUPRÊME';
   cardEl.querySelector('#cardS').textContent='elle a tout absorbé';
   cardEl.classList.add('on');
-  Speech.say("JE SUIS LA PATATE. TOUT EST PATATE.",TIERS[MAXT],TIERS[MAXT].tag,TIERS[MAXT].col);
+  Voice.play('t13_0', MAXT, "JE SUIS LA PATATE. TOUT EST PATATE.", TIERS[MAXT].tag, TIERS[MAXT].col, TIERS[MAXT]);
   for(let i=0;i<26;i++) setTimeout(()=>burst(rnd(80,W-80),rnd(220,FLOOR-40),8),i*45);
   setTimeout(()=>{
     cardEl.classList.remove('on');
     resetBoard(); state.episode++; epEl.textContent=state.episode;
     state.running=true; state.lastDrop=performance.now();
-    Speech.say("Épisode "+state.episode+". La patate revient.",NARRATOR,'LE NARRATEUR','#ffd166');
+    Voice.narrate('episode');
   },3600);
 }
 function endEpisode(reason){
@@ -995,7 +1084,7 @@ function endEpisode(reason){
   cardEl.querySelector('#cardS').textContent=reason==='overflow'?"trop de patates. c'est beau.":'';
   cardEl.classList.add('on');
   Sound.thump(70,0.8,0.6);
-  Speech.say("La patate a débordé.",NARRATOR,'LE NARRATEUR','#ff8a5c');
+  Voice.narrate('overflow','La patate a débordé.','#ff8a5c');
   board.style.transition='filter .5s,opacity .5s';
   board.style.filter='blur(5px) brightness(.6)';
   board.style.opacity='.5';
@@ -1034,7 +1123,7 @@ board.addEventListener('pointerdown',e=>{
   addPotato(Math.random()<0.25?1:0,x,64,60);
   showGuide(x);
   Sound.blip(340,0.07,'square',0.09);
-  if(Math.random()<0.2) Speech.say("hop.",NARRATOR,'LE NARRATEUR','#ffffff');
+  if(Math.random()<0.2) Voice.narrate('hop','Hop.','#ffffff');
 });
 
 function fit(){
@@ -1087,23 +1176,24 @@ document.getElementById('start').addEventListener('click',()=>{
   Sound.ensure(); Sound.resume();
   state.running=true; state.lastDrop=performance.now();
   prefill(); paintBg(0);
-  setTimeout(()=>Speech.say("Bienvenue dans Patate Merge. Épisode un.",NARRATOR,'LE NARRATEUR','#ffd166'),500);
-  setTimeout(()=>{ if(state.running) Speech.say("La patate portugaise arrive.",NARRATOR,'LE NARRATEUR','#63d29a'); },4200);
+  Voice.load();
+  setTimeout(()=>Voice.narrate('welcome'),500);
+
 });
 
 /* ---------------- debug ---------------- */
 window.BRAINROT={
-  state,TIERS,Speech,Sound,
+  state,TIERS,Speech,Sound,Voice,
   get stats(){
     const alive=state.potatoes.filter(p=>p.alive);
     return {running:state.running,count:alive.length,merges:state.mergeCount,maxTier:state.maxTier,
       maxTierName:TIERS[state.maxTier].n,episode:state.episode,coins:state.coins,
-      subtitle:subLine.textContent,voices:Speech.voices.length,spoken:Speech.log.length,
+      subtitle:subLine.textContent,voices:Voice.buffers.size,spoken:Voice.log.length,
       card:cardEl.classList.contains('on'), ribbon:document.getElementById('ribbon').classList.contains('on'),
       errors:window.__errs||[]};
   },
   forceTier(t,x){ addPotato(clamp(t,0,MAXT-1), x||rnd(80,W-80), 180, 30); },
-  speak(text,tier){ Speech.say(text,TIERS[tier],TIERS[tier].tag,TIERS[tier].col); }
+  speak(text,tier){ Speech.tts(text,TIERS[tier]); }
 };
 window.__errs=[];
 window.addEventListener('error',e=>window.__errs.push(String(e.message)));
