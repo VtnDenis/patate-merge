@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 v1.html
+reels/
+analyze_audio.py

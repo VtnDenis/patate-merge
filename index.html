@@ -159,8 +159,8 @@
     transform-origin:50% 50%;will-change:transform;z-index:2}
   .potato svg.pbody{display:block;width:100%;height:100%;overflow:visible;
     filter:drop-shadow(0 7px 10px rgba(0,0,0,.45))}
-  .potato .acc{position:absolute;left:50%;top:-34%;transform:translateX(-50%) rotate(-8deg);
-    font-size:calc(var(--d)*.44);line-height:1;
+  .potato .acc{position:absolute;left:50%;top:-30%;transform:translateX(-50%) rotate(-8deg);
+    font-size:calc(var(--d)*.38);line-height:1;
     filter:drop-shadow(0 3px 5px rgba(0,0,0,.55)) drop-shadow(0 0 2px rgba(0,0,0,.35));
     animation:float 3.2s ease-in-out infinite}
   .toque{position:absolute;left:50%;top:-30%;transform:translateX(-50%);width:58%;height:40%}
@@ -414,17 +414,19 @@ const TIERS = [
     lang:"fr-FR", pitch:0.9, rate:0.95, lines:["ici patate, je vous reçois cinq sur cinq.","Houston, on a une frite.","la gravité, c'est pour les autres."], col:"#a8c8ff" },
   { n:"la Patate influenceuse", tag:"LA PATATE INFLUENCEUSE", d:107, c:["#ffe6f2","#f0a9c9","#b0527f"], acc:"📱", deco:"",
     lang:"fr-FR", pitch:1.35, rate:1.2, lines:["les gars, code promo PATATE.","abonne-toi, ça change la vie.","je fais un unboxing de moi-même."], col:"#ff8fc4" },
-  { n:"la Patate banquière", tag:"LA PATATE BANQUIÈRE", d:115, c:["#f2efe6","#c9c0ac","#6f6754"], acc:"", deco:"tophat",
-    lang:"fr-FR", pitch:0.7, rate:0.92, lines:["la patate est un actif.","j'ai shorté la frite.","le rendement, c'est tout."], col:"#d9c37a" },
-  { n:"la Patate présidente", tag:"LA PATATE PRÉSIDENTE", d:122, c:["#e6edff","#a9bce8","#54679c"], acc:"🎖️", deco:"sash",
-    lang:"fr-FR", pitch:0.62, rate:0.82, lines:["mes chers compatriotes.","je dissous l'Assemblée des frites.","la patate, c'est nous."], col:"#9fb8ff" },
-  { n:"la Patate nucléaire", tag:"LA PATATE NUCLÉAIRE", d:128, c:["#e6ffd9","#9fe376","#3d7d2a"], acc:"☢️", deco:"glowGreen",
-    lang:"fr-FR", pitch:0.68, rate:0.88, lines:["attention, ça chauffe.","je suis instable, mais bio.","trois cents ans de demi-vie."], col:"#8cff6a" },
-  { n:"la Patate cosmique", tag:"LA PATATE COSMIQUE", d:133, c:["#efe2ff","#b295e8","#5c3c9e"], acc:"🌌", deco:"stars",
-    lang:"fr-FR", pitch:0.6, rate:0.76, lines:["je vois toutes les frites.","l'univers est une purée.","le temps n'a plus de goût."], col:"#c9a8ff" },
-  { n:"la Patate suprême", tag:"LA PATATE SUPRÊME", d:140, c:["#fff6cc","#ffd45c","#a06a12"], acc:"👑", deco:"halo",
-    lang:"fr-FR", pitch:0.5, rate:0.7, lines:["JE SUIS LA PATATE.","TOUT EST PATATE.","VOUS N'ÊTES QUE DES FRITES."], col:"#ffd76a" }
+  { n:"la Patate ninja", tag:"LA PATATE NINJA", d:114, c:["#dfe6f2","#9aa9c4","#3f4a63"], acc:"🥷", deco:"",
+    lang:"fr-FR", pitch:0.9, rate:1.0, lines:["La patate ninja."], col:"#9fb0c9" },
+  { n:"la Patate musicale", tag:"LA PATATE MUSICALE", d:123, c:["#f3d9ff","#c58ae8","#6b2f8f"], acc:"🎸", deco:"",
+    lang:"fr-FR", pitch:1.1, rate:1.0, lines:["La patate musicale."], col:"#c78bff" },
+  { n:"la Patate volante", tag:"LA PATATE VOLANTE", d:132, c:["#e8f7ff","#9ed3f0","#3f7d9c"], acc:"🕊️", deco:"",
+    lang:"fr-FR", pitch:1.0, rate:1.0, lines:["La patate volante."], col:"#8fd8ff" },
+  { n:"la Cosmopatate", tag:"LA COSMOPATATE", d:142, c:["#e6d8ff","#9f81dc","#452a7d"], acc:"🌌", deco:"stars",
+    lang:"fr-FR", pitch:0.8, rate:1.0, lines:["Cosmopatate."], col:"#b08bff" },
+  { n:"la Super Patate", tag:"LA SUPER PATATE", d:152, c:["#fff6cc","#ffd45c","#a06a12"], acc:"🦸", deco:"halo",
+    lang:"fr-FR", pitch:0.7, rate:1.0, lines:["La super patate."], col:"#ffd76a" }
 ];
+// répliques réelles découpées dans le reel de la trend (DfQKWy8gR14)
+const REAL = { 9:"real_ninja", 10:"real_musicale", 11:"real_volante", 12:"real_cosmo", 13:"real_super" };
 const NARRATOR = { lang:"fr-FR", pitch:0.35, rate:0.82 };
 const CAPTIONS = [
   'elle a fusionné 14 fois et elle me regarde 😭 <b>#brainrot #patate #fyp</b>',
@@ -499,8 +501,12 @@ const Voice = {
     if(this.loading || !audio) return;
     this.loading = true;
     const jobs = [];
-    TIERS.forEach((t,i)=> t.lines.forEach((_,k)=> jobs.push([`t${i}_${k}`, `audio/t${i}_${k}.mp3`])));
+    TIERS.forEach((t,i)=>{
+      if(REAL[i]) return;                       // paliers avec audio réel
+      t.lines.forEach((_,k)=> jobs.push([`t${i}_${k}`, `audio/t${i}_${k}.mp3`]));
+    });
     Object.keys(NARR).forEach(k=> jobs.push([`n_${k}`, `audio/n_${k}.mp3`]));
+    Object.values(REAL).forEach(k=> jobs.push([k, `audio/${k}.mp3`]));
 
     // 1) téléchargement en parallèle
     const raws = await Promise.all(jobs.map(async ([key,url])=>{
@@ -595,6 +601,8 @@ const Voice = {
   },
   sayTier(tier){
     const t = TIERS[tier];
+    const real = REAL[tier];
+    if(real){ this.play(real, tier, t.lines[0], t.tag, t.col, t); return; }
     const k = Math.floor(Math.random()*t.lines.length);
     this.play(`t${tier}_${k}`, tier, t.lines[k], t.tag, t.col, t);
   },
@@ -1100,10 +1108,10 @@ function supreme(x,y){
   flash.style.transition='none'; flash.style.opacity='.75';
   requestAnimationFrame(()=>{ flash.style.transition='opacity .9s'; flash.style.opacity='0'; });
   cardEl.querySelector('#cardK').textContent='ÉPISODE '+state.episode;
-  cardEl.querySelector('#cardT').textContent='LA PATATE SUPRÊME';
+  cardEl.querySelector('#cardT').textContent='LA SUPER PATATE';
   cardEl.querySelector('#cardS').textContent='elle a tout absorbé';
   cardEl.classList.add('on');
-  Voice.play('t13_0', MAXT, "JE SUIS LA PATATE. TOUT EST PATATE.", TIERS[MAXT].tag, TIERS[MAXT].col, TIERS[MAXT]);
+  Voice.sayTier(MAXT);
   for(let i=0;i<26;i++) setTimeout(()=>burst(rnd(80,W-80),rnd(220,FLOOR-40),8),i*45);
   setTimeout(()=>{
     cardEl.classList.remove('on');

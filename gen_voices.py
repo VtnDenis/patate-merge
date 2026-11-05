@@ -35,11 +35,7 @@ VOICE = [
     ("it-IT-DiegoNeural",   "+2%"),    # 6 italienne
     ("fr-FR-RemyMultilingualNeural", "+4%"),   # 7 cosmonaute
     ("fr-FR-VivienneMultilingualNeural", "+12%"),  # 8 influenceuse
-    ("fr-FR-DeniseNeural",  "+0%"),    # 9 banquière
-    ("fr-FR-HenriNeural",   "-4%"),    # 10 présidente
-    ("fr-FR-RemyMultilingualNeural", "-2%"),   # 11 nucléaire
-    ("fr-FR-HenriNeural",   "-6%"),    # 12 cosmique
-    ("fr-FR-HenriNeural",   "-8%"),    # 13 suprême
+    None, None, None, None, None,       # 9-13 : audio réel découpé dans le reel
 ]
 NARR_VOICE = ("fr-FR-HenriNeural", "-12%")
 
@@ -66,7 +62,10 @@ async def main():
     sem = asyncio.Semaphore(4)
     jobs = []
     for i, lines in enumerate(tiers):
-        voice, rate = VOICE[i]
+        cast = VOICE[i]
+        if cast is None:
+            continue
+        voice, rate = cast
         for k, text in enumerate(lines):
             jobs.append((text, voice, rate, outdir / f"t{i}_{k}.mp3"))
     for key, text in NARR.items():
