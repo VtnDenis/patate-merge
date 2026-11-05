@@ -502,23 +502,32 @@ const Voice = {
     TIERS.forEach((t,i)=> t.lines.forEach((_,k)=> jobs.push([`t${i}_${k}`, `audio/t${i}_${k}.mp3`])));
     Object.keys(NARR).forEach(k=> jobs.push([`n_${k}`, `audio/n_${k}.mp3`]));
 
-    const one = async (key,url)=>{
+    // 1) téléchargement en parallèle
+    const raws = await Promise.all(jobs.map(async ([key,url])=>{
       for(let attempt=0; attempt<3; attempt++){
         try{
           const res = await fetch(url, {cache:'force-cache'});
           if(!res.ok) throw new Error('http '+res.status);
-          const buf = await audio.decodeAudioData(await res.arrayBuffer());
-          this.buffers.set(key, buf);
-          return;
+          return [key, await res.arrayBuffer()];
         }catch(e){
-          await new Promise(r=>setTimeout(r, 220 + attempt*280));
+          await new Promise(r=>setTimeout(r, 200 + attempt*260));
         }
       }
-      this.missing.push(key);
-    };
-    // par paquets de 8 pour ne pas saturer le décodage sur mobile
-    for(let i=0;i<jobs.length;i+=8){
-      await Promise.all(jobs.slice(i,i+8).map(([k,u])=>one(k,u)));
+      return [key, null];
+    }));
+    // 2) décodage séquentiel (Chrome n'aime pas les décodages simultanés)
+    for(const [key, ab] of raws){
+      if(!ab){ this.missing.push(key); continue; }
+      let done = false;
+      for(let attempt=0; attempt<2 && !done; attempt++){
+        try{
+          this.buffers.set(key, await audio.decodeAudioData(ab.slice(0)));
+          done = true;
+        }catch(e){
+          await new Promise(r=>setTimeout(r, 120));
+        }
+      }
+      if(!done) this.missing.push(key);
     }
   },
   play(key, tier, text, who, color, profile){
@@ -1188,7 +1197,7 @@ document.getElementById('start').addEventListener('click', async ()=>{
   btn.textContent = 'PRÉPARATION DES VOIX…';
   Sound.ensure(); Sound.resume();
   // on attend les voix (max 4 s) pour ne pas démarrer sur la synthèse du navigateur
-  await Promise.race([ Voice.load(), new Promise(r=>setTimeout(r,4000)) ]);
+  await Promise.race([ Voice.load(), new Promise(r=>setTimeout(r,7000)) ]);
   btn.disabled = false;
   btn.textContent = '▶ LANCER LE BRAINROT';
   boot.classList.add('hide');
