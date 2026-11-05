@@ -494,7 +494,7 @@ Speech.init();
 
 /* Banque de voix pré-générées (edge-tts) + effet ralenti selon le palier */
 const Voice = {
-  buffers:new Map(), missing:[], loading:false, current:null, log:[], lastAt:0,
+  buffers:new Map(), missing:[], errors:[], loading:false, current:null, log:[], lastAt:0,
   async load(){
     if(this.loading || !audio) return;
     this.loading = true;
@@ -528,6 +528,22 @@ const Voice = {
         }
       }
       if(!done) this.missing.push(key);
+    }
+    // 3) rattrapage : un fichier peut échouer dans le lot, on le reprend seul
+    if(this.missing.length){
+      await new Promise(r=>setTimeout(r, 400));
+      for(const key of this.missing.slice()){
+        const url = `audio/${key}.mp3?retry=${Date.now()}`;
+        try{
+          const res = await fetch(url);
+          if(!res.ok) throw new Error('http '+res.status);
+          const buf = await audio.decodeAudioData(await res.arrayBuffer());
+          this.buffers.set(key, buf);
+          this.missing = this.missing.filter(k=>k!==key);
+        }catch(e){
+          this.errors.push([key, e.name+': '+e.message]);
+        }
+      }
     }
   },
   play(key, tier, text, who, color, profile){
