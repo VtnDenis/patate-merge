@@ -1170,15 +1170,20 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ---------------- démarrage ---------------- */
-document.getElementById('start').addEventListener('click',()=>{
+document.getElementById('start').addEventListener('click', async ()=>{
   if(state.running) return;
-  boot.classList.add('hide');
+  const btn = document.getElementById('start');
+  btn.disabled = true;
+  btn.textContent = 'PRÉPARATION DES VOIX…';
   Sound.ensure(); Sound.resume();
+  // on attend les voix (max 4 s) pour ne pas démarrer sur la synthèse du navigateur
+  await Promise.race([ Voice.load(), new Promise(r=>setTimeout(r,4000)) ]);
+  btn.disabled = false;
+  btn.textContent = '▶ LANCER LE BRAINROT';
+  boot.classList.add('hide');
   state.running=true; state.lastDrop=performance.now();
   prefill(); paintBg(0);
-  Voice.load();
-  setTimeout(()=>Voice.narrate('welcome'),500);
-
+  setTimeout(()=>Voice.narrate('welcome'),450);
 });
 
 /* ---------------- debug ---------------- */
