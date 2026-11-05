@@ -506,7 +506,7 @@ const Voice = {
     const raws = await Promise.all(jobs.map(async ([key,url])=>{
       for(let attempt=0; attempt<3; attempt++){
         try{
-          const res = await fetch(url, {cache:'force-cache'});
+          const res = await fetch(attempt ? url + '?r=' + attempt : url);
           if(!res.ok) throw new Error('http '+res.status);
           return [key, await res.arrayBuffer()];
         }catch(e){
